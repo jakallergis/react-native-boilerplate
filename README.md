@@ -27,13 +27,11 @@ Mostly because I like to have a consistency between my projects, and having a ba
 
 #### What's inside
 
-It uses the obvious option (at least to me) [React Navigation](https://reactnavigation.org/) for its navigation needs, and [Redux](https://github.com/reactjs/redux) to manage its state as well as each navigator's state individually through any action we available. I chose [Realm](https://realm.io/docs/javascript/latest) for its database, mostly because it was the first database i tried with react-native, but I immediately fell in love with it as it is very efficient, makes for a great persistence layer that can easily be extended and is very easy to learn. If you don't like Realm, or you prefer another approach, you could easily remove the Realm part, and proceed with whatever it is you'd like to use. It also uses Reactotron since it lets you log stuff without the need to enter debug mode in the app.
+It uses the obvious option (at least to me) [React Navigation](https://reactnavigation.org/) for its navigation needs, and [Redux](https://github.com/reactjs/redux) to manage its state as well as each navigator's state individually through any action available. I chose [Realm](https://realm.io/docs/javascript/latest) for its database, mostly because it was the first database i tried with react-native, but I immediately fell in love with it as it is very efficient, makes for a great persistence layer that can easily be extended and is very easy to learn. If you don't like Realm, or you just prefer another approach, you could easily remove the Realm part, and proceed with whatever it is you'd like to use. It also uses Reactotron since it lets you log stuff without the need to enter debug mode in the app.
 
 #### Realm JS as the database
 
-As I mentioned in the [What's inside](#whats-inside) section, I chose Realm because of several Reasons. What I like the most about it is that its implementation is completely native which makes it fast, and it accesses the Javascript thread directly, bypassing the bridge coms which makes it even faster.
-
-This ofcourse has its drawbacks like making debugging with chrome super super slow. This is the only reason I see why someone could to go with something else. 
+As I mentioned in the [What's inside](#whats-inside) section, I chose Realm because of several Reasons. What I like the most about it is that its implementation is completely native which makes it fast, and it accesses the Javascript thread directly, bypassing the bridge coms which makes it even faster. This ofcourse has its drawbacks like making debugging with chrome super super slow due to the JS not running in the device but inside a chrome worker. Not being able to use the full suite of debugging tools currently available for react-native the only reason I see why someone would want to go with another solution. 
 
 #### React Navigation with Redux integration
 
@@ -43,7 +41,7 @@ The app consist of four navigators:
 
 - `AppNavigator` is a `SwitchNavigator` that will show our `LaunchScreen` when the app starts, then depending on the session status will either show our `AuthNavigator` or the actual app content.
   It is fully integrated with Redux, so we manage its state manually through a reducer.
-- `AuthNavigator` is a `StackNavigator` that will handle all the Authentication screens.
+- `AuthNavigator` is a `StackNavigator` that will handle all the Authentication screens. It is not ingetrated with Redux as its only job is to only show one screen. By having only one auth screen ( `common/Login.js` ) we could omit the navigator completely and just put the Login Screen as a route inside the `AppNavigator`, but for demonstration purposes Im using a navigator, which you can extend as you'd like.
 - `MobileNavigator` is a `StackNavigator` that will handle all the application content through screens
   that are created either specifically for mobile devices like `mobile/EditTodo.js`, or to be common screens like `Home` which will determine their device-type-based logic through props like `isTablet`.
   It is fully integrated with Redux, so we manage its state manually through a reducer.
