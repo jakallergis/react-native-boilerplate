@@ -1,0 +1,55 @@
+{
+  "name": "ReactNativeBoilerplate",
+  "version": "0.1.0",
+  "description": "A React Native Boilerplate app using React Navigation, Redux and Realm, with full integration of Redux and Navigation",
+  "author": {
+    "name": "J. A. Kallergis",
+    "email": "j.a.kallergis@gmail.com",
+    "url": "https://github.com/jakallergis"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jakallergis/react-native-boilerplate.git"
+  },
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "test": "jest"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "react": "^16.3.0-alpha.1",
+    "react-native": "0.54.3",
+    "react-navigation": "^1.5.8",
+    "react-navigation-redux-helpers": "^1.0.3",
+    "react-redux": "^5.0.7",
+    "realm": "^2.3.3",
+    "redux": "^3.7.2",
+    "redux-thunk": "^2.2.0"
+  },
+  "devDependencies": {
+    "babel-jest": "22.4.3",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-preset-react-native": "4.0.0",
+    "babel-preset-react-native-stage-0": "^1.0.1",
+    "flow-bin": "^0.64.0",
+    "jest": "22.4.3",
+    "react-test-renderer": "^16.3.0-alpha.1",
+    "reactotron-react-native": "^1.14.0"
+  },
+  "jest": {
+    "preset": "react-native"
+  },
+  "keywords": [
+    "react",
+    "react-native",
+    "react-navigation",
+    "redux",
+    "react-redux",
+    "redux-thunk",
+    "realm",
+    "realmjs",
+    "flow"
+  ]
+}
