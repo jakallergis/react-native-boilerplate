@@ -51,3 +51,11 @@ buck-out/
 */fastlane/report.xml
 */fastlane/Preview.html
 */fastlane/screenshots
+
+default\.realm
+
+default\.realm\.lock
+
+default\.realm\.management/
+
+test_database/

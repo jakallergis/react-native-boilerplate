@@ -2,12 +2,9 @@
  * @flow
  *
  * The base class to extend by all of our Models.
- *
- * Extending this class is required for EVERY model
- * you want to create for the Realm db because of the
- * implementation of our RealmDatabase class where
- * methods like deleteAll() and deleteAllExcept()
- * rely on getters from this class.
+ * The defined properties here are mostly for debugging purposes.
+ * You can improve it by adding any logic you would like to be
+ * shared between all your models.
  */
 
 import Realm from 'realm';
@@ -15,7 +12,7 @@ import Realm from 'realm';
 /** Globals */
 const { Reactotron } = global;
 
-export default class RealmObject extends Realm.Object {
+class RealmObject extends Realm.Object {
 
   /**
    * This is an array of model names that are considered
@@ -96,8 +93,11 @@ export default class RealmObject extends Realm.Object {
    * So since Realm requires as to define schemas as statics and give a name
    * property to each schema, it's only logical to get the name of an object
    * from its schema definition.
-   * @return {string} the actual name of an object
    */
   get schema(): Realm.ObjectSchema { return this.objectSchema(); }
   get type(): string { return this.schema.name; }
 }
+
+export default global.__TESTS__ENABLED
+  ? class MockRealmObject {}
+  : RealmObject;

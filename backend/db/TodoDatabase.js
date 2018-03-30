@@ -35,9 +35,8 @@ export class TodoDatabase extends RealmDatabase {
    * live though, you should use migration strategies every time you
    * make breaking changes otherwise your users will have to uninstall
    * the app and reinstall it every time you publish such an update
-   * @param path
    */
-  constructor(path?: string) {
+  constructor(schema: any[], path?: string) {
     const params: RealmParams = { schema, schemaVersion: 0, path, deleteRealmIfMigrationNeeded: true };
     super(params);
   }
@@ -53,7 +52,7 @@ export class TodoDatabase extends RealmDatabase {
 
   /** Creators */
 
-  createNewTodo = ({ title = 'Untitled', completed = false, ...todo }: any): Todo => {
+  createNewTodo = ({ title = 'Untitled', completed = false, ...todo }: any = {}): Todo => {
     if (!title) title = 'Untitled';
     const UUID = `${ this.randomString(4) }-${ this.randomString(4) }-${ this.randomString(4) }-${ this.randomString(4) }`;
     const creationDate = new Date();
@@ -102,4 +101,4 @@ export class TodoDatabase extends RealmDatabase {
  * be a singleton. However we do export the class
  * itself as well for better use with unit tests.
  */
-export default new TodoDatabase();
+export default new TodoDatabase(schema);

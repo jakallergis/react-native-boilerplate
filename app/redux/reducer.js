@@ -26,7 +26,7 @@ import TabletNavigationState   from './TabletNavigator/reducer';
 import MobileNavigationState   from './MobileNavigator/reducer';
 import Todos                   from './Todos/reducer';
 
-const UIFrozen = (state: boolean = false, action: Action) => {
+export const UIFrozen = (state: boolean = false, action: Action) => {
   switch (action.type) {
     case AppNavigatorActions.LOGOUT_STARTED:
     case TodoActions.DELETE_TODO_STARTED:

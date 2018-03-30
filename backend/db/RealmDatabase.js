@@ -135,6 +135,7 @@ export class RealmDatabase {
    */
   deleteAllExcept = (models: string[]): void => {
     if (!(models && models.length)) this.emptyDatabase();
+
     const modelsToDelete = this.modelClasses
       .map(({ schema }) => schema.name)
       .filter((type: string) => !models.includes(type));

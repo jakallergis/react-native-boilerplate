@@ -38,6 +38,7 @@ export default class App extends Component<Props> {
 
   constructor(props: Props) {
     super(props);
+    console.log({ Reactotron });
     Reactotron.clear();
     this.store = createReduxStore(props.isTablet);
   }
