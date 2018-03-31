@@ -84,7 +84,7 @@ Im no coding God so if you see that I should change something in this project, o
 
 - [ ] documentation on how to change the project's name.
 - [ ] documentation with images on how everything works.
-- [ ] create unit tests.
+- [x] create unit tests.
 
 **License**
 

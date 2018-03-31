@@ -59,3 +59,5 @@ default\.realm\.lock
 default\.realm\.management/
 
 test_database/
+
+realm-object-server/

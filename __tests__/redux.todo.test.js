@@ -1,102 +1,148 @@
 /** Actions */
-import actions, { TodoActions }     from '../app/redux/Todos/actions';
-import rootActions, { RootActions } from '../app/redux/actions';
+import actions, { TodoActions } from '../app/redux/Todos/actions';
+import rootActions              from '../app/redux/actions';
 
 /** Reducers */
-import reducer                      from '../app/redux/Todos/reducer';
-import { UIFrozen }                 from '../app/redux/reducer';
+import reducer                  from '../app/redux/Todos/reducer';
+import { UIFrozen }             from '../app/redux/reducer';
 
 /** Utilities */
-import TodoDatabase                 from '../backend/db/TodoDatabase';
+import TodoDatabase             from '../backend/db/TodoDatabase';
 
-describe('Todo Redux actions and state', () => {
+describe('Todo Redux', () => {
 
-  test('New Todo', () => {
+  const todo = TodoDatabase.createNewTodo();
+
+  describe('New Todo - newTodo()', () => {
     const action = actions.newTodo();
-    expect(action.type).toBe(TodoActions.NEW_TODO);
+    test('action should have the correct type', () => {
+      expect(action.type).toBe(TodoActions.NEW_TODO);
+    });
 
     const state = reducer(null, action);
-    expect(state.currentTodo).toBe(null);
-    expect(state.editorOpen).toBe(true);
+    test('reducer should return no currentTodo', () => {
+      expect(state.currentTodo).toBe(null);
+    });
+
+    test('reducer should return editorOpen true', () => {
+      expect(state.editorOpen).toBe(true);
+    });
   });
 
-  test('Select Todo', () => {
-    const todo = 'mock todo';
+  describe('Select Todo - selectTodo()', () => {
     const action = actions.selectTodo(todo);
-    expect(action.type).toBe(TodoActions.SELECT_TODO);
-    expect(action.currentTodo).toBe(todo);
 
-    const state = reducer(null, action);
-    expect(state.currentTodo).toBe(todo);
-    expect(state.editorOpen).toBe(true);
+    test('action should have the correct type', () => {
+      expect(action.type).toBe(TodoActions.SELECT_TODO);
+    });
+
+    test('action should have the currentTodo', () => {
+      expect(action.currentTodo).toBe(todo);
+    });
+
+    test('reducer should return the currentTodo', () => {
+      const state = reducer(null, action);
+      expect(state.currentTodo).toMatchObject(todo);
+    });
+
+    test('reducer should return editorOpen true', () => {
+      const state = reducer(null, action);
+      expect(state.editorOpen).toBe(true);
+    });
   });
 
-  test('Deselect Todo', () => {
-    const todo = 'mock todo';
-    const action = actions.selectTodo(todo);
-    expect(action.type).toBe(TodoActions.SELECT_TODO);
-    expect(action.currentTodo).toBe(todo);
+  describe('Deselect Todo - deselectTodo()', () => {
+    const selectAction = actions.selectTodo(todo);
+    const selectState = reducer(null, selectAction);
 
-    const state = reducer(null, action);
-    expect(state.currentTodo).toBe(todo);
-    expect(state.editorOpen).toBe(true);
+    const action = actions.deselectTodo();
+    test('action should have the correct type', () => {
+      expect(action.type).toBe(TodoActions.DESELECT_TODO);
+    });
 
-    const nextAction = actions.deselectTodo();
-    expect(nextAction.type).toBe(TodoActions.DESELECT_TODO);
+    const state = reducer(selectState, action);
+    test('reducer should return no currentTodo', () => {
+      expect(state.currentTodo).toBe(null);
+    });
 
-    const nextState = reducer(state, nextAction);
-    expect(nextState.currentTodo).toBe(null);
-    expect(nextState.editorOpen).toBe(false);
+    test('reducer should return editorOpen false', () => {
+      expect(state.editorOpen).toBe(false);
+    });
   });
 
-  test('Delete Todo (Thunk)', async () => {
-    const todo = TodoDatabase.createNewTodo();
-    const action = actions.selectTodo(todo);
-    expect(action.type).toBe(TodoActions.SELECT_TODO);
-    expect(action.currentTodo).toBe(todo);
-
-    const state = reducer(null, action);
-    expect(state.currentTodo).toBe(todo);
-    expect(state.editorOpen).toBe(true);
-
+  describe('Delete Todo - deleteTodo()', () => {
     const startedAction = { type: TodoActions.DELETE_TODO_STARTED };
     const finishedAction = { type: TodoActions.DELETE_TODO_FINISHED };
 
-    const dispatchedActions = [];
-    const dispatch = jest.fn((action) => dispatchedActions.push(action));
-    const getState = jest.fn(() => ({ Todos: { currentTodo: todo } }));
+    const selectAction = actions.selectTodo(todo);
+    const selectState = reducer(null, selectAction);
+
+    test('UI should freeze on start', () => {
+      const UIFrozenOnStart = UIFrozen(null, startedAction);
+      expect(UIFrozenOnStart).toBe(true);
+    });
 
     const thunk = actions.deleteTodo();
-    await thunk(dispatch, getState);
-    expect(dispatch).toHaveBeenCalledTimes(2);
-    expect(dispatch).toHaveBeenCalledWith(startedAction);
-    expect(dispatch).toHaveBeenCalledWith(finishedAction);
-    expect(dispatch).toHaveBeenLastCalledWith(finishedAction);
-    expect(dispatchedActions.length).toBe(2);
-    expect(dispatchedActions[0].type).toBe(startedAction.type);
-    expect(dispatchedActions[1].type).toBe(finishedAction.type);
-    expect(getState).toHaveBeenCalledTimes(1);
+    test('action should return a function (thunk)', () => {
+      expect(thunk).toEqual(expect.any(Function));
+    });
 
-    const nextState = reducer(state, finishedAction);
-    expect(nextState.currentTodo).toBe(null);
-    expect(nextState.editorOpen).toBe(false);
+    test('thunk should call getState once and dispatch start and finish', async () => {
+      const dispatch = jest.fn();
+      const getState = jest.fn(() => ({ Todos: { currentTodo: todo } }));
+      await thunk(dispatch, getState);
 
-    expect(() => todo.title).toThrowError('Accessing object of type Todo which has been invalidated or deleted');
+      expect(dispatch).toHaveBeenCalledTimes(2);
+      expect(getState).toHaveBeenCalledTimes(1);
 
-    const UIFrozenOnStart = UIFrozen(null, startedAction);
-    expect(UIFrozenOnStart).toBe(true);
-    const UIFrozenOnFinish = UIFrozen(null, finishedAction);
-    expect(UIFrozenOnFinish).toBe(false);
+      expect(dispatch.mock.calls[0][0]).toMatchObject(startedAction);
+      expect(dispatch.mock.calls[1][0]).toMatchObject(finishedAction);
+    });
+
+    test('thunk should delete the currentTodo', () => {
+      expect(() => todo.title).toThrowError('Accessing object of type Todo which has been invalidated or deleted');
+    });
+
+    const state = reducer(selectState, finishedAction);
+    test('reducer should return no currentTodo', () => {
+      expect(state.currentTodo).toBe(null);
+    });
+
+    test('reducer should return editorOpen false', () => {
+      expect(state.editorOpen).toBe(false);
+    });
+
+    test('UI should unfreeze on finish', () => {
+      const UIFrozenOnFinish = UIFrozen(null, finishedAction);
+      expect(UIFrozenOnFinish).toBe(false);
+    });
   });
 
-  test('Go to edit todo', () => {
-    const todo = 'mock todo';
-    const action = rootActions.goToEditTodo(todo);
-    expect(action.type).toBe(RootActions.GO_TO_EDIT_TODO);
-    expect(action.currentTodo).toBe(todo);
+  describe('Go to EditTodo Screen', () => {
+    const actionWithTodo = rootActions.goToEditTodo(todo);
+    const actionWithoutTodo = rootActions.goToEditTodo();
 
-    const state = reducer(null, action);
-    expect(state.currentTodo).toBe(todo);
-    expect(state.editorOpen).toBe(!!todo);
+    describe('if action has currentTodo', () => {
+      const state = reducer(null, actionWithTodo);
+      test('reducer should return the currentTodo', () => {
+        expect(state.currentTodo).toBe(todo);
+      });
+
+      test('reducer should return editorOpen true', () => {
+        expect(state.editorOpen).toBe(true);
+      });
+    });
+
+    describe('if action does not have currentTodo', () => {
+      const state = reducer(null, actionWithoutTodo);
+      test('reducer should return undefined currentTodo', () => {
+        expect(state.currentTodo).toBe(undefined);
+      });
+
+      test('reducer should return editorOpen false', () => {
+        expect(state.editorOpen).toBe(false);
+      });
+    });
   });
-});
+})
+;

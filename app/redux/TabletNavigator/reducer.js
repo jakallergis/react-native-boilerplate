@@ -22,13 +22,10 @@ import { RootActions }          from '../actions';
 
 const initialState = TabletNavigator.router.getStateForAction(NavigationActions.init());
 const todosRedux = NavigationActions.navigate({ routeName: 'TodosRedux' });
-const editTodoRedux = NavigationActions.navigate({ routeName: 'EditTodoRedux' });
 
 export default (state: NavigationState<any> = initialState, action: Action) => {
   const { router } = TabletNavigator;
   switch (action.type) {
-    case RootActions.GO_TO_EDIT_TODO:
-      return router.getStateForAction(editTodoRedux, state);
     case RootActions.GO_TO_TODOS:
       return router.getStateForAction(todosRedux, state);
   }

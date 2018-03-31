@@ -134,7 +134,7 @@ export class RealmDatabase {
    * @param models {string[]} the models to skip deletion for
    */
   deleteAllExcept = (models: string[]): void => {
-    if (!(models && models.length)) this.emptyDatabase();
+    if (!(models && models.length)) return this.emptyDatabase();
 
     const modelsToDelete = this.modelClasses
       .map(({ schema }) => schema.name)

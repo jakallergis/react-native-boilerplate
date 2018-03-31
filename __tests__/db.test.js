@@ -5,177 +5,297 @@ const schema = [TestModel1, TestModel2, TestModel3, TestModel4];
 const randomPath = () => `./test_database/db${ Date.now() }.tests.realm`;
 const randomDB = () => new RealmDatabase({ schema, path: randomPath() });
 
-describe('RealmDatabase constructor', () => {
+describe('RealmDatabase', () => {
+  describe('Methods', () => {
+    describe('constructor()', () => {
 
-  let path = randomPath();
-  beforeEach(() => path = randomPath());
+      let path = randomPath();
+      beforeEach(() => path = randomPath());
 
-  test('should create a db with params and empty schema', () => {
-    const db = new RealmDatabase({ schema: [], path });
-    expect(db).toBeTruthy();
-    expect(db.modelClasses.length).toBe(0);
-  });
+      test('should create a db with params and empty schema', () => {
+        const db = new RealmDatabase({ schema: [], path });
+        expect(db).toBeInstanceOf(RealmDatabase);
+        expect(db.modelClasses).toHaveLength(0);
+      });
 
-  test('should create a db with params and non empty schema', () => {
-    const db = new RealmDatabase({ schema, path });
-    expect(db).toBeTruthy();
-    expect(db.modelClasses.length).toBe(4);
-  });
+      test('should create a db with params and non empty schema', () => {
+        const db = new RealmDatabase({ schema, path });
+        expect(db).toBeInstanceOf(RealmDatabase);
+        expect(db.modelClasses).toHaveLength(4);
+      });
 
-  test('should throw without params', () => {
-    expect(() => new RealmDatabase()).toThrow();
-  });
+      test('should throw without params', () => {
+        expect(() => new RealmDatabase()).toThrow();
+      });
 
-  test('should throw without schema in params', () => {
-    expect(() => new RealmDatabase({ path })).toThrow();
-  });
-
-});
-
-describe('RealmDatabase methods', () => {
-
-  let db = randomDB();
-  beforeEach(() => db = randomDB());
-
-  test('beginTransaction should init transactions', () => {
-    db.beginTransaction();
-    expect(db.realm.isInTransaction).toBeTruthy();
-
-    const sampleModel = db.realm.create('TestModel1', { name: 'John', irrelevantProperty: 3 });
-    expect(sampleModel.name).toBe('John');
-    expect(sampleModel.TestModels2).toBeTruthy();
-    expect(sampleModel.TestModel3).toBe(null);
-    expect(sampleModel.irrelevantProperty).toBe(undefined);
-  });
-
-  test('cancelTransaction should cancel a transaction', () => {
-    db.beginTransaction();
-    expect(db.realm.isInTransaction).toBeTruthy();
-
-    const sampleModel = db.realm.create('TestModel1', { name: 'John' });
-    expect(sampleModel.name).toBe('John');
-
-    const allItems = db.realm.objects('TestModel1');
-    expect(allItems.length).toBe(1);
-
-    db.cancelTransaction();
-    expect(db.realm.isInTransaction).toBeFalsy();
-    expect(allItems.length).toBe(0);
-  });
-
-  test('commitTransaction should commit a transaction', () => {
-    db.beginTransaction();
-    expect(db.realm.isInTransaction).toBeTruthy();
-
-    const sampleModel = db.realm.create('TestModel1', { name: 'John', irrelevantProperty: 3 });
-    expect(sampleModel.name).toBe('John');
-
-    db.commitTransaction();
-    expect(db.realm.isInTransaction).toBeFalsy();
-    expect(sampleModel.name).toBe('John');
-    expect(sampleModel.TestModels2).toBeTruthy();
-    expect(sampleModel.TestModel3).toBe(null);
-    expect(sampleModel.irrelevantProperty).toBe(undefined);
-
-    const allItems = db.realm.objects('TestModel1');
-    expect(allItems.length).toBe(1);
-  });
-
-  test('write should run a transaction and return its return', () => {
-    expect(db.realm.isInTransaction).toBeFalsy();
-
-    const returnable = db.write(() => {
-      expect(db.realm.isInTransaction).toBeTruthy();
-      const sampleModel = db.realm.create('TestModel1', { name: 'John' });
-      expect(sampleModel.name).toBe('John');
-      return sampleModel;
+      test('should throw without schema in params', () => {
+        expect(() => new RealmDatabase({ path })).toThrow();
+      });
     });
 
-    expect(db.realm.isInTransaction).toBeFalsy();
-    expect(returnable.name).toBe('John');
-    const allItems = db.realm.objects('TestModel1');
-    expect(allItems.length).toBe(1);
+    describe('beginTransaction()', () => {
+      const db = randomDB();
 
-    expect(() => db.write(() => {
-      expect(db.realm.isInTransaction).toBeTruthy();
-      throw new Error('Threw inside RealmDatabase.write');
-    })).toThrowError('Threw inside RealmDatabase.write');
-    expect(db.realm.isInTransaction).toBeFalsy();
-  });
+      test('should not be in transaction before calling it', () => {
+        expect(db.realm.isInTransaction).toBe(false);
+      });
 
-  test('emptyDatabase should empty the whole database', () => {
-    db.write(() => {
-      db.realm.create('TestModel1', { name: 'John' });
-      db.realm.create('TestModel1', { name: 'Mary' });
-      db.realm.create('TestModel1', { name: 'Doe' });
-      db.realm.create('TestModel2', { name: 'George' });
-      db.realm.create('TestModel3', { name: 'Alex' });
+      test('should not be able to create objects before calling it', () => {
+        expect(() => db.realm.create('TestModel1', { name: 'John' }))
+          .toThrowError('Cannot modify managed objects outside of a write transaction.');
+      });
+
+      test('should be in transaction after calling it', () => {
+        db.beginTransaction();
+        expect(db.realm.isInTransaction).toBe(true);
+      });
+
+      test('should be able to create objects after calling it', () => {
+        db.beginTransaction();
+        const testModel = db.realm.create('TestModel1', { name: 'John' });
+        expect(testModel).toMatchObject({
+          name: 'John',
+          TestModels2: {},
+          TestModel3: null
+        });
+      });
     });
 
-    const allModel1 = db.realm.objects('TestModel1');
-    const allModel2 = db.realm.objects('TestModel2');
-    const allModel3 = db.realm.objects('TestModel3');
-    expect(allModel1.length).toBe(3);
-    expect(allModel2.length).toBe(1);
-    expect(allModel3.length).toBe(1);
+    describe('cancelTransaction()', () => {
+      const db = randomDB();
+      beforeEach(() => db.beginTransaction());
 
-    db.emptyDatabase();
-    expect(allModel1.length).toBe(0);
-    expect(allModel2.length).toBe(0);
-    expect(allModel3.length).toBe(0);
-  });
+      test('should be in transaction before calling it', () => {
+        expect(db.realm.isInTransaction).toBe(true);
+      });
 
-  test('deleteAll should delete passed models and their childModels', () => {
-    db.write(() => {
-      db.realm.create('TestModel1', { name: 'John' });
-      db.realm.create('TestModel1', { name: 'Mary' });
-      db.realm.create('TestModel1', { name: 'Doe' });
-      db.realm.create('TestModel2', { name: 'George' });
-      db.realm.create('TestModel3', { name: 'Alex' });
-      db.realm.create('TestModel4', { name: 'Gary' });
-      db.realm.create('TestModel4', { name: 'Jane' });
+      test('should not be in transaction after calling it', () => {
+        db.cancelTransaction();
+        expect(db.realm.isInTransaction).toBe(false);
+      });
+
+      test('should cancel object creation', () => {
+        const allItems = db.realm.objects('TestModel1');
+        expect(allItems).toHaveLength(0);
+
+        db.realm.create('TestModel1', { name: 'John' });
+        expect(allItems).toHaveLength(1);
+
+        db.cancelTransaction();
+        expect(allItems).toHaveLength(0);
+      });
     });
 
-    const allModel1 = db.realm.objects('TestModel1');
-    const allModel2 = db.realm.objects('TestModel2');
-    const allModel3 = db.realm.objects('TestModel3');
-    const allModel4 = db.realm.objects('TestModel4');
-    expect(allModel1.length).toBe(3);
-    expect(allModel2.length).toBe(1);
-    expect(allModel3.length).toBe(1);
-    expect(allModel4.length).toBe(2);
+    describe('commitTransaction()', () => {
+      const db = randomDB();
+      beforeEach(() => db.beginTransaction());
 
-    db.deleteAll(['TestModel1']);
-    expect(allModel1.length).toBe(0);
-    expect(allModel2.length).toBe(0);
-    expect(allModel3.length).toBe(0);
-    expect(allModel4.length).toBe(2);
-  });
+      test('should be in transaction before calling it', () => {
+        expect(db.realm.isInTransaction).toBe(true);
+      });
 
-  test('deleteAllExcept should delete all but the passed models', () => {
-    db.write(() => {
-      db.realm.create('TestModel1', { name: 'John' });
-      db.realm.create('TestModel1', { name: 'Mary' });
-      db.realm.create('TestModel1', { name: 'Doe' });
-      db.realm.create('TestModel2', { name: 'George' });
-      db.realm.create('TestModel3', { name: 'Alex' });
-      db.realm.create('TestModel4', { name: 'Gary' });
-      db.realm.create('TestModel4', { name: 'Jane' });
+      test('should not be in transaction after calling it', () => {
+        db.commitTransaction();
+        expect(db.realm.isInTransaction).toBe(false);
+      });
+
+      test('should save object creation', () => {
+        const allItems = db.realm.objects('TestModel1');
+        expect(allItems).toHaveLength(0);
+
+        const testModel = db.realm.create('TestModel1', { name: 'John' });
+        expect(allItems).toHaveLength(1);
+
+        db.commitTransaction();
+        expect(allItems).toHaveLength(1);
+        expect(testModel).toMatchObject({
+          name: 'John',
+          TestModels2: {},
+          TestModel3: null
+        });
+      });
     });
 
-    const allModel1 = db.realm.objects('TestModel1');
-    const allModel2 = db.realm.objects('TestModel2');
-    const allModel3 = db.realm.objects('TestModel3');
-    const allModel4 = db.realm.objects('TestModel4');
-    expect(allModel1.length).toBe(3);
-    expect(allModel2.length).toBe(1);
-    expect(allModel3.length).toBe(1);
-    expect(allModel4.length).toBe(2);
+    describe('write()', () => {
+      let db = randomDB();
+      beforeEach(() => db = randomDB());
 
-    db.deleteAllExcept(['TestModel1', 'TestModel4']);
-    expect(allModel1.length).toBe(3);
-    expect(allModel2.length).toBe(0);
-    expect(allModel3.length).toBe(0);
-    expect(allModel4.length).toBe(2);
+      test('should throw if no transaction passed', () => {
+        expect(() => db.write()).toThrow();
+      });
+
+      test('should call beginTransaction()', () => {
+        const spy = jest.spyOn(db, 'beginTransaction');
+        db.write(() => {});
+        expect(spy).toHaveBeenCalledTimes(1);
+        spy.mockRestore();
+      });
+
+      test('should call commitTransaction()', () => {
+        const spy = jest.spyOn(db, 'commitTransaction');
+        db.write(() => {});
+        expect(spy).toHaveBeenCalledTimes(1);
+        spy.mockRestore();
+      });
+
+      test('should call cancelTransaction() on throw', () => {
+        const spy = jest.spyOn(db, 'cancelTransaction');
+        expect(() => db.write()).toThrow();
+        expect(spy).toHaveBeenCalledTimes(2);
+        spy.mockRestore();
+      });
+
+      test('should call the transaction', () => {
+        const transaction = jest.fn();
+        db.write(transaction);
+        expect(transaction).toHaveBeenCalledTimes(1);
+      });
+
+      test('should be able to create objects', () => {
+        const allItems = db.realm.objects('TestModel1');
+        expect(allItems).toHaveLength(0);
+
+        db.write(() => {
+          db.realm.create('TestModel1', { name: 'John' });
+          db.realm.create('TestModel1', { name: 'Doe' });
+        });
+
+        expect(allItems).toHaveLength(2);
+      });
+
+      test('should return from the transaction', () => {
+        const returnable = db.write(() => db.realm.create('TestModel1', { name: 'John' }));
+        expect(returnable).toMatchObject({
+          name: 'John',
+          TestModels2: {},
+          TestModel3: null
+        });
+      });
+    });
+
+    describe('emptyDatabase()', () => {
+
+      let db = randomDB();
+      beforeEach(() => {
+        db = randomDB();
+        db.write(() => {
+          db.realm.create('TestModel1', { name: 'John' });
+          db.realm.create('TestModel1', { name: 'Mary' });
+          db.realm.create('TestModel1', { name: 'Doe' });
+          db.realm.create('TestModel2', { name: 'George' });
+          db.realm.create('TestModel3', { name: 'Alex' });
+        });
+      });
+
+      test(' should empty the database', () => {
+        db.emptyDatabase();
+        const allModel1 = db.realm.objects('TestModel1');
+        const allModel2 = db.realm.objects('TestModel2');
+        const allModel3 = db.realm.objects('TestModel3');
+        expect(allModel1).toHaveLength(0);
+        expect(allModel2).toHaveLength(0);
+        expect(allModel3).toHaveLength(0);
+      });
+    });
+
+    describe('deleteAll()', () => {
+      let db = randomDB();
+      beforeEach(() => {
+        db = randomDB();
+        db.write(() => {
+          db.realm.create('TestModel1', { name: 'John' });
+          db.realm.create('TestModel1', { name: 'Mary' });
+          db.realm.create('TestModel1', { name: 'Doe' });
+          db.realm.create('TestModel2', { name: 'George' });
+          db.realm.create('TestModel3', { name: 'Alex' });
+          db.realm.create('TestModel4', { name: 'Jak' });
+        });
+      });
+
+      test('should delete the passed models', () => {
+        const allModel1 = db.realm.objects('TestModel1');
+        const allModel2 = db.realm.objects('TestModel2');
+        const allModel3 = db.realm.objects('TestModel3');
+        const allModel4 = db.realm.objects('TestModel4');
+
+        db.deleteAll(['TestModel2', 'TestModel3']);
+        expect(allModel1).toHaveLength(3);
+        expect(allModel2).toHaveLength(0);
+        expect(allModel3).toHaveLength(0);
+        expect(allModel4).toHaveLength(1);
+      });
+
+      test('should delete the childModels even if not specified', () => {
+        const allModel1 = db.realm.objects('TestModel1');
+        const allModel2 = db.realm.objects('TestModel2');
+        const allModel3 = db.realm.objects('TestModel3');
+        const allModel4 = db.realm.objects('TestModel4');
+
+        db.deleteAll(['TestModel1']);
+        expect(allModel1).toHaveLength(0);
+        expect(allModel2).toHaveLength(0);
+        expect(allModel3).toHaveLength(0);
+        expect(allModel4).toHaveLength(1);
+      });
+    });
+
+    describe('deleteAllExcept()', () => {
+      let db = randomDB();
+      beforeEach(() => {
+        db = randomDB();
+        db.write(() => {
+          db.realm.create('TestModel1', { name: 'John' });
+          db.realm.create('TestModel1', { name: 'Mary' });
+          db.realm.create('TestModel1', { name: 'Doe' });
+          db.realm.create('TestModel2', { name: 'George' });
+          db.realm.create('TestModel3', { name: 'Alex' });
+          db.realm.create('TestModel4', { name: 'Jak' });
+        });
+      });
+
+      test('should call emptyDatabase() if no passed models', () => {
+        const spy = jest.spyOn(db, 'emptyDatabase');
+        db.deleteAllExcept();
+        expect(spy).toHaveBeenCalledTimes(1);
+      });
+
+      test('should empty the database if no passed models', () => {
+        const allModel1 = db.realm.objects('TestModel1');
+        const allModel2 = db.realm.objects('TestModel2');
+        const allModel3 = db.realm.objects('TestModel3');
+        const allModel4 = db.realm.objects('TestModel4');
+
+        db.deleteAllExcept();
+        expect(allModel1).toHaveLength(0);
+        expect(allModel2).toHaveLength(0);
+        expect(allModel3).toHaveLength(0);
+        expect(allModel4).toHaveLength(0);
+      });
+
+      test('should delete all but the passed models', () => {
+        const allModel1 = db.realm.objects('TestModel1');
+        const allModel2 = db.realm.objects('TestModel2');
+        const allModel3 = db.realm.objects('TestModel3');
+        const allModel4 = db.realm.objects('TestModel4');
+
+        db.deleteAllExcept(['TestModel1', 'TestModel4']);
+        expect(allModel1).toHaveLength(3);
+        expect(allModel2).toHaveLength(0);
+        expect(allModel3).toHaveLength(0);
+        expect(allModel4).toHaveLength(1);
+      });
+    });
+  });
+
+  describe('Operations', () => {
+    describe('Creation', () => {
+      let db = randomDB();
+      beforeEach(() => db = randomDB());
+
+      test('should ignore non-schema properties', () => {
+        const item = db.write(() => db.realm.create('TestModel1', { name: 'John', irrelevantProperty: 3 }));
+        expect(item.irrelevantProperty).toBe(undefined);
+      });
+    });
   });
 });

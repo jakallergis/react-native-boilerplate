@@ -12,7 +12,7 @@ import Realm from 'realm';
 /** Globals */
 const { Reactotron } = global;
 
-class RealmObject extends Realm.Object {
+export default class RealmObject extends Realm.Object {
 
   /**
    * This is an array of model names that are considered
@@ -97,7 +97,3 @@ class RealmObject extends Realm.Object {
   get schema(): Realm.ObjectSchema { return this.objectSchema(); }
   get type(): string { return this.schema.name; }
 }
-
-export default global.__TESTS__ENABLED
-  ? class MockRealmObject {}
-  : RealmObject;

@@ -1,16 +1,34 @@
 import actions, { RootActions } from '../app/redux/actions';
 
-describe('Root Redux actions and state', () => {
+describe('Root Redux', () => {
 
-  test('Go To Todos', () => {
+  describe('Go to Todos Screen', () => {
     const action = actions.goToTodos();
-    expect(action.type).toBe(RootActions.GO_TO_TODOS);
+    test('action should have the correct type', () => {
+      expect(action.type).toBe(RootActions.GO_TO_TODOS);
+    });
   });
 
-  test('Go To Edit Todo', () => {
+  describe('Go to EditTodo Screen', () => {
     const todo = 'mock todo';
-    const action = actions.goToEditTodo(todo);
-    expect(action.type).toBe(RootActions.GO_TO_EDIT_TODO);
-    expect(action.currentTodo).toBe(todo);
+    const actionWithTodo = actions.goToEditTodo(todo);
+    const actionWithoutTodo = actions.goToEditTodo();
+
+    test('action should have the correct type', () => {
+      expect(actionWithTodo.type).toBe(RootActions.GO_TO_EDIT_TODO);
+      expect(actionWithoutTodo.type).toBe(RootActions.GO_TO_EDIT_TODO);
+    });
+
+    describe('if action has currentTodo', () => {
+      test('action should have the currentTodo', () => {
+        expect(actionWithTodo.currentTodo).toBe(todo);
+      });
+    });
+
+    describe('if action does not have currentTodo', () => {
+      test('action should have undefined currentTodo', () => {
+        expect(actionWithoutTodo.currentTodo).toBe(undefined);
+      });
+    });
   });
 });
